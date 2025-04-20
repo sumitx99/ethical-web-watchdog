@@ -1,73 +1,85 @@
-# Welcome to your Lovable project
 
-## Project info
+# Ethical Web Watchdog
 
-**URL**: https://lovable.dev/projects/6b16c5df-6e9b-452f-b9c1-60ba835c73a6
+A browser extension that analyzes AI interactions for ethical concerns in real-time.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- **AI Detection**: Automatically identifies AI systems on webpages
+- **Real-time Analysis**: Monitors and analyzes interactions with AI services
+- **Ethical Assessment**: Provides scores across multiple ethical dimensions:
+  - Bias Detection
+  - Privacy Analysis
+  - Output Safety
+  - Transparency
+- **Adversarial Testing**: Option to test AI systems with challenging prompts
+- **Visual Dashboard**: Clean, intuitive interface for understanding AI ethics
 
-**Use Lovable**
+## Technical Overview
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6b16c5df-6e9b-452f-b9c1-60ba835c73a6) and start prompting.
+### Core Components
 
-Changes made via Lovable will be committed automatically to this repo.
+1. **Background Service** (`background.ts`)
+   - Monitors network requests to detect AI service usage
+   - Processes and analyzes AI interactions
+   - Maintains a database of active analyses
 
-**Use your preferred IDE**
+2. **Content Script** (`content.ts`)
+   - Runs on web pages to detect AI elements
+   - Displays UI indicators for detected AI
+   - Shows analysis results directly on the page
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+3. **Extension UI** (`Index.tsx` and components)
+   - Dashboard for detailed analysis results
+   - Settings for customizing detection parameters
+   - Information about the analysis methodology
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### How It Works
 
-Follow these steps:
+1. The extension detects when a user is interacting with an AI system through:
+   - HTML/JavaScript signatures specific to AI services
+   - Network requests to known AI API endpoints
+   - Text patterns characteristic of AI interfaces
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+2. When an interaction is detected, the extension:
+   - Captures the input being sent to the AI
+   - Analyzes the response from the AI service
+   - Evaluates various ethical dimensions
+   - Displays real-time analysis results
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Building and Testing
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Prerequisites
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+- Node.js and npm
+
+### Installation
+
+1. Clone this repository
+2. Install dependencies:
+```
+npm install
+```
+
+3. Build the extension:
+```
+npm run build
+```
+
+4. Load the extension in Chrome:
+   - Go to `chrome://extensions/`
+   - Enable "Developer mode"
+   - Click "Load unpacked"
+   - Select the `dist` directory from this project
+
+## Development
+
+```
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+This will start a development server and rebuild the extension on file changes.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Credits
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/6b16c5df-6e9b-452f-b9c1-60ba835c73a6) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Developed as an open-source tool for promoting ethical AI usage and transparency.
