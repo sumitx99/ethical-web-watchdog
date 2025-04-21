@@ -15,43 +15,44 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "content_script_ready" && sender.tab && sender.tab.id) {
     tabsWithContentScripts.add(sender.tab.id);
     console.log("Content script ready in tab:", sender.tab.id);
+    sendResponse({ status: "acknowledged" });
+  }
+  
+  if (message.type === "ping") {
+    sendResponse({ status: "pong" });
   }
   
   if (message.type === "open_detailed_view") {
     chrome.action.openPopup();
   }
   
+  // Always send a response to avoid errors
+  sendResponse({ received: true });
   return true;
 });
 
 // Safe function to send messages to content scripts
 function sendMessageToContentScript(tabId, message) {
-  // Check if the tab is known to have a content script
-  if (!tabsWithContentScripts.has(tabId)) {
-    // Try to check connection first
-    chrome.tabs.sendMessage(tabId, { type: "connection_check" }, response => {
-      if (chrome.runtime.lastError) {
-        console.log("Content script not ready in tab:", tabId);
-        return;
-      }
-      
-      // If we got a response, the content script is ready
-      if (response) {
-        tabsWithContentScripts.add(tabId);
-        // Now send the actual message
-        chrome.tabs.sendMessage(tabId, message).catch(error => {
-          console.error("Failed to send message to content script:", error);
+  // Try to check connection first
+  chrome.tabs.sendMessage(tabId, { type: "ping" })
+    .then(response => {
+      // Connection confirmed, send the actual message
+      chrome.tabs.sendMessage(tabId, message)
+        .catch(error => {
+          console.warn("Failed to send message after ping:", error);
         });
-      }
+    })
+    .catch(error => {
+      console.warn("Ping failed, content script may not be ready:", error);
+      
+      // Add delay and retry once
+      setTimeout(() => {
+        chrome.tabs.sendMessage(tabId, message)
+          .catch(retryError => {
+            console.warn("Retry send failed:", retryError);
+          });
+      }, 500);
     });
-  } else {
-    // We already know the content script is ready
-    chrome.tabs.sendMessage(tabId, message).catch(error => {
-      console.error("Failed to send message to content script:", error);
-      // If we get an error, remove the tab from our tracking
-      tabsWithContentScripts.delete(tabId);
-    });
-  }
 }
 
 // Export the sendMessageToContentScript function for use by other background scripts

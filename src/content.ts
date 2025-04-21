@@ -45,6 +45,8 @@ function detectAIElements(): void {
   chrome.runtime.sendMessage({
     type: "ai_elements_detected",
     pageInfo
+  }).catch(error => {
+    console.warn("Failed to send detection results to background script:", error);
   });
 
   // Show UI indicators if AI is detected
@@ -123,14 +125,27 @@ function showAIDetectionIndicator(): void {
 
   indicator.addEventListener('click', () => {
     // Open the extension popup or detailed view
-    chrome.runtime.sendMessage({ type: "open_detailed_view" });
+    chrome.runtime.sendMessage({ type: "open_detailed_view" }).catch(error => {
+      console.warn("Failed to send open_detailed_view message:", error);
+    });
   });
 
   document.body.appendChild(indicator);
 }
 
+// Establish a reliable connection status
+let connectionEstablished = false;
+
 // Listen for messages from the background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Special case for ping - always respond immediately
+  if (message.type === "ping") {
+    sendResponse({ status: "pong" });
+    connectionEstablished = true;
+    return true;
+  }
+
+  // Handle other message types
   switch (message.type) {
     case "ai_interaction_detected":
       handleAIInteraction(message);
@@ -141,8 +156,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
     case "get_page_info":
       sendResponse({ pageInfo });
-      break;
+      return true;
   }
+
+  // Always confirm receipt of messages
+  sendResponse({ received: true });
+  return true;
 });
 
 // Handle detected AI interactions
@@ -216,10 +235,35 @@ function calculateOverallScore(analysis: any): number {
   return scores.reduce((sum, score) => sum + score, 0) / scores.length;
 }
 
+// Notify the background script that the content script is ready
+function notifyBackgroundScriptReady() {
+  chrome.runtime.sendMessage({ type: "content_script_ready" })
+    .then(response => {
+      console.log("Background script acknowledged content script ready:", response);
+      connectionEstablished = true;
+    })
+    .catch(error => {
+      console.warn("Failed to notify background script that content script is ready:", error);
+      // Retry after a short delay
+      setTimeout(notifyBackgroundScriptReady, 1000);
+    });
+}
+
 // Run detection when the page is loaded
 window.addEventListener('load', () => {
-  setTimeout(detectAIElements, 1000); // Slight delay to let the page render
+  // Notify background script that content script is ready
+  notifyBackgroundScriptReady();
+  
+  // Then start detection with a slight delay
+  setTimeout(detectAIElements, 1000);
 });
 
 // Re-run detection periodically
 setInterval(detectAIElements, 5000);
+
+// Periodically check connection if not established
+setInterval(() => {
+  if (!connectionEstablished) {
+    notifyBackgroundScriptReady();
+  }
+}, 10000);

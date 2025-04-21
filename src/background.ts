@@ -19,12 +19,47 @@ export const AI_SERVICE_ENDPOINTS = [
 // Track active AI interactions
 const activeInteractions = new Map<string, any>();
 
+// Safe function to send messages to content scripts
+function notifyContentScript(tabId: number, message: any): void {
+  // Check if tab exists first
+  chrome.tabs.get(tabId).then(tab => {
+    // Check if content script is ready by sending a ping
+    chrome.tabs.sendMessage(tabId, { type: "ping" })
+      .then(response => {
+        // If we got a response, send the actual message
+        chrome.tabs.sendMessage(tabId, message).catch(error => {
+          console.warn("Secondary send failed:", error);
+        });
+      })
+      .catch(error => {
+        // Content script might not be ready yet, try injection
+        console.log("Content script not ready in tab:", tabId, "Error:", error);
+        // Wait a short time and try again - content script might be loading
+        setTimeout(() => {
+          chrome.tabs.sendMessage(tabId, message).catch(err => {
+            console.warn("Retry send failed:", err);
+          });
+        }, 500);
+      });
+  }).catch(error => {
+    console.warn("Tab not found:", tabId, "Error:", error);
+  });
+}
+
 // Setup listeners for network requests
 setupWebRequestListeners(activeInteractions, notifyContentScript);
 
 // Listen for messages from content scripts or popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
+    case "content_script_ready":
+      console.log("Content script ready in tab:", sender.tab?.id);
+      sendResponse({ status: "acknowledged" });
+      break;
+    case "ping":
+      // Respond to ping from content script
+      sendResponse({ status: "pong" });
+      break;
     case "get_active_interactions":
       sendResponse({
         interactions: Array.from(activeInteractions.values())
@@ -43,13 +78,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ error: "Unknown message type" });
   }
 });
-
-// Send msg to content script
-function notifyContentScript(tabId: number, message: any): void {
-  chrome.tabs.sendMessage(tabId, message).catch(error => {
-    console.error("Failed to send message to content script:", error);
-  });
-}
 
 // --- Misc Testing/Utility ---
 
@@ -83,4 +111,3 @@ setInterval(() => {
     }
   }
 }, 60 * 1000); // Check every minute
-
