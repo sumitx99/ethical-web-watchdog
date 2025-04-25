@@ -3,6 +3,9 @@
 
 A browser extension that analyzes AI interactions for ethical concerns in real-time.
 
+![image](https://github.com/user-attachments/assets/50c2a193-e13d-4593-adaf-e3ba0542417d)
+
+
 ## Features
 
 - **AI Detection**: Automatically identifies AI systems on webpages
@@ -58,7 +61,7 @@ A browser extension that analyzes AI interactions for ethical concerns in real-t
 1. Clone this repository
 2. Install dependencies:
 ```
-npm install
+npm install --legacy-peer-deps
 ```
 
 3. Build the extension:
