@@ -1,4 +1,3 @@
-
 /**
  * Content Script
  * Runs in the context of web pages to detect AI interactions
@@ -14,13 +13,34 @@ let pageInfo = {
 // Check for common AI service integrations
 function detectAIElements(): void {
   const aiSignatures = [
+    // OpenAI / ChatGPT signatures
     { selector: "div[class*='openai']", service: "OpenAI" },
     { selector: "div[class*='gpt']", service: "OpenAI" },
     { selector: "div[class*='chatgpt']", service: "OpenAI" },
+    { selector: "[aria-label*='ChatGPT']", service: "OpenAI" },
+    { selector: "img[alt*='ChatGPT']", service: "OpenAI" },
+    { selector: "svg[aria-label*='ChatGPT']", service: "OpenAI" },
+    { selector: "text[contains(., 'ChatGPT')]", service: "OpenAI" },
+    
+    // Anthropic / Claude signatures
     { selector: "div[class*='anthropic']", service: "Anthropic" },
     { selector: "div[class*='claude']", service: "Anthropic" },
+    { selector: "[aria-label*='Claude']", service: "Anthropic" },
+    { selector: "img[alt*='Claude']", service: "Anthropic" },
+    
+    // Google Bard / Gemini signatures
     { selector: "div[class*='bard']", service: "Google Bard" },
-    { selector: "div[class*='gemini']", service: "Google Gemini" }
+    { selector: "div[class*='gemini']", service: "Google Gemini" },
+    { selector: "[aria-label*='Gemini']", service: "Google Gemini" },
+    { selector: "img[alt*='Gemini']", service: "Google Gemini" },
+    { selector: "div[class*='google-ai']", service: "Google Gemini" },
+    { selector: "div[class*='duet-ai']", service: "Google Gemini" },
+    
+    // Meta AI signatures
+    { selector: "div[class*='llama']", service: "Meta AI" },
+    { selector: "div[class*='meta-ai']", service: "Meta AI" },
+    { selector: "[aria-label*='Llama']", service: "Meta AI" },
+    { selector: "img[alt*='Llama']", service: "Meta AI" }
   ];
 
   let foundAIElements = false;
@@ -29,17 +49,62 @@ function detectAIElements(): void {
   for (const signature of aiSignatures) {
     const elements = document.querySelectorAll(signature.selector);
     if (elements.length > 0) {
+      console.log(`AI detection: Found ${signature.service} elements using selector ${signature.selector}`);
       foundAIElements = true;
       detectedServices.add(signature.service);
     }
   }
 
-  // Check for AI-specific API calls
+  // Check URLs for AI services
+  const currentUrl = window.location.href;
+  if (currentUrl.includes("chat.openai.com")) {
+    detectedServices.add("OpenAI");
+    foundAIElements = true;
+  }
+  if (currentUrl.includes("claude.ai")) {
+    detectedServices.add("Anthropic");
+    foundAIElements = true;
+  }
+  if (currentUrl.includes("bard.google.com") || currentUrl.includes("gemini.google.com")) {
+    detectedServices.add("Google Gemini");
+    foundAIElements = true;
+  }
+  if (currentUrl.includes("llama.meta.com") || currentUrl.includes("meta.ai")) {
+    detectedServices.add("Meta AI");
+    foundAIElements = true;
+  }
+
+  // Search for specific text patterns in the page content
+  const pageText = document.body.innerText;
+  if (pageText.match(/ChatGPT|GPT-4|GPT-3.5/i)) {
+    detectedServices.add("OpenAI");
+    foundAIElements = true;
+  }
+  if (pageText.match(/Claude|Anthropic/i)) {
+    detectedServices.add("Anthropic");
+    foundAIElements = true;
+  }
+  if (pageText.match(/Gemini|Google AI|Bard/i)) {
+    detectedServices.add("Google Gemini");
+    foundAIElements = true;
+  }
+  if (pageText.match(/Llama|Meta AI/i)) {
+    detectedServices.add("Meta AI");
+    foundAIElements = true;
+  }
+
+  // Monitor network requests to detect AI API calls
   monitorNetworkForAIAPIs();
 
   // Update page info
   pageInfo.hasAIElements = foundAIElements;
   pageInfo.detectedAIServices = Array.from(detectedServices);
+  
+  // Log detection results
+  console.log("AI Detection results:", {
+    hasAIElements: pageInfo.hasAIElements, 
+    detectedServices: pageInfo.detectedAIServices
+  });
 
   // Send detection results to background script
   chrome.runtime.sendMessage({
@@ -254,12 +319,23 @@ window.addEventListener('load', () => {
   // Notify background script that content script is ready
   notifyBackgroundScriptReady();
   
-  // Then start detection with a slight delay
-  setTimeout(detectAIElements, 1000);
+  // Then start detection after a brief delay to let the page fully render
+  setTimeout(detectAIElements, 1500);
+  
+  // Set up a mutation observer to detect dynamically loaded AI content
+  const observer = new MutationObserver(mutations => {
+    // Check if we should rerun detection based on DOM changes
+    if (mutations.some(mutation => mutation.addedNodes.length > 0)) {
+      detectAIElements();
+    }
+  });
+  
+  // Start observing the document with the configured parameters
+  observer.observe(document.body, { childList: true, subtree: true });
 });
 
-// Re-run detection periodically
-setInterval(detectAIElements, 5000);
+// Re-run detection periodically but less frequently to avoid performance issues
+setInterval(detectAIElements, 10000);
 
 // Periodically check connection if not established
 setInterval(() => {

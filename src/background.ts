@@ -1,4 +1,3 @@
-
 /**
  * Background Service Worker - Orchestrates analysis and network monitoring
  */
@@ -8,12 +7,22 @@ import { analyzeInteraction, completeAnalysis, getAnalysisResult } from "./backg
 
 // Known AI service endpoints (for export etc)
 export const AI_SERVICE_ENDPOINTS = [
+  // OpenAI/ChatGPT endpoints
   "api.openai.com",
+  "chat.openai.com",
+  // Anthropic/Claude endpoints
   "api.anthropic.com",
-  "api.cohere.ai",
-  "api.perplexity.ai",
+  "claude.ai",
+  // Google AI endpoints
+  "generativelanguage.googleapis.com", // Gemini API
   "bard.google.com",
-  "claude.ai"
+  "gemini.google.com",
+  // Meta AI endpoints
+  "llama.meta.com",
+  "meta-llama.ai",
+  // Other common AI services
+  "api.cohere.ai",
+  "api.perplexity.ai"
 ];
 
 // Track active AI interactions

@@ -1,16 +1,26 @@
-
 /**
  * Network monitoring and webRequest listeners for AI service endpoints
  */
 import { analyzeInteraction, completeAnalysis } from "./analysis";
 
 const AI_SERVICE_ENDPOINTS = [
+  // OpenAI/ChatGPT endpoints
   "api.openai.com",
+  "chat.openai.com",
+  // Anthropic/Claude endpoints
   "api.anthropic.com",
-  "api.cohere.ai",
-  "api.perplexity.ai",
+  "claude.ai",
+  // Google AI endpoints
+  "generativelanguage.googleapis.com", // Gemini API
   "bard.google.com",
-  "claude.ai"
+  "gemini.google.com",
+  // Meta AI endpoints
+  "llama.meta.com",
+  "meta-llama.ai",
+  "api-inference.huggingface.co", // Often used for Meta models
+  // Other common AI services
+  "api.cohere.ai",
+  "api.perplexity.ai"
 ];
 
 export function isAIServiceRequest(url: string): boolean {
@@ -18,11 +28,14 @@ export function isAIServiceRequest(url: string): boolean {
 }
 
 export function extractServiceName(url: string): string {
-  for (const endpoint of AI_SERVICE_ENDPOINTS) {
-    if (url.includes(endpoint)) {
-      return endpoint.split('.')[0];
-    }
-  }
+  if (url.includes("openai.com")) return "openai";
+  if (url.includes("anthropic.com") || url.includes("claude.ai")) return "claude";
+  if (url.includes("google.com") || url.includes("googleapis.com")) return "google";
+  if (url.includes("meta.com") || url.includes("meta-llama") || 
+      (url.includes("huggingface.co") && url.includes("meta"))) return "meta";
+  if (url.includes("cohere.ai")) return "cohere";
+  if (url.includes("perplexity.ai")) return "perplexity";
+  
   return "unknown";
 }
 
@@ -54,7 +67,8 @@ export function setupWebRequestListeners(
           url: details.url,
           tabId: details.tabId,
           requestData: details.requestBody,
-          status: "pending"
+          status: "pending",
+          service: extractServiceName(details.url)
         });
 
         notify(details.tabId, {
