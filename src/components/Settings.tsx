@@ -7,6 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Textarea } from "@/components/ui/textarea";
+import { Download, MessageSquare } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
   const [settings, setSettings] = useState({
@@ -24,6 +28,12 @@ const Settings = () => {
       { id: 'meta', name: 'Meta AI', enabled: false },
     ]
   });
+  
+  const [complaintOpen, setComplaintOpen] = useState(false);
+  const [complaintText, setComplaintText] = useState('');
+  const [complainCategory, setComplainCategory] = useState('bias');
+  const [downloadFormat, setDownloadFormat] = useState('pdf');
+  const { toast } = useToast();
 
   const handleToggle = (key: keyof typeof settings) => {
     setSettings(prev => ({
@@ -72,6 +82,71 @@ const Settings = () => {
         saveButton.removeAttribute('disabled');
       }, 1500);
     }
+  };
+
+  const handleComplaintSubmit = () => {
+    if (complaintText.trim().length < 10) {
+      toast({
+        title: "Complaint too short",
+        description: "Please provide more details about your complaint",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // In a real extension, send to backend
+    console.log('Complaint submitted:', { 
+      category: complainCategory,
+      text: complaintText 
+    });
+    
+    // Show success message and reset form
+    toast({
+      title: "Complaint submitted",
+      description: "Thank you for your feedback. We'll review it shortly.",
+    });
+    
+    setComplaintText('');
+    setComplaintOpen(false);
+  };
+
+  const handleDownloadReport = () => {
+    // In a real extension, generate actual report
+    const mockReport = {
+      timestamp: new Date().toISOString(),
+      detectionSettings: {
+        sensitivity: settings.sensitivityThreshold,
+        monitoredServices: settings.aiServicesList.filter(s => s.enabled).map(s => s.name)
+      },
+      recentScores: {
+        bias: 75,
+        privacy: 85,
+        safety: 60,
+        transparency: 70
+      }
+    };
+    
+    // Convert to string
+    const reportString = JSON.stringify(mockReport, null, 2);
+    
+    // Create blob and download
+    const blob = new Blob([reportString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    
+    a.href = url;
+    a.download = `ai-ethics-report-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Report downloaded",
+      description: `Report saved as ${downloadFormat.toUpperCase()} file`,
+    });
   };
 
   return (
@@ -149,6 +224,106 @@ const Settings = () => {
             Higher values mean more strict ethical evaluations
           </p>
         </div>
+      </Card>
+      
+      {/* New: Detailed Report Section */}
+      <Card className="p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium">Detailed Reports</h3>
+          <Badge variant="outline" className="font-normal">
+            {settings.detailedReports ? "Enabled" : "Disabled"}
+          </Badge>
+        </div>
+        
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            When detailed reports are enabled, comprehensive analyses of AI interactions 
+            will be saved and available for download.
+          </p>
+          
+          <div className="flex items-center gap-2">
+            <Label htmlFor="report-format" className="text-sm">Format:</Label>
+            <select 
+              id="report-format" 
+              className="text-xs border rounded px-2 py-1"
+              value={downloadFormat}
+              onChange={(e) => setDownloadFormat(e.target.value)}
+            >
+              <option value="pdf">PDF</option>
+              <option value="json">JSON</option>
+              <option value="csv">CSV</option>
+            </select>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleDownloadReport}
+              className="ml-auto"
+            >
+              <Download className="mr-1 h-4 w-4" />
+              Download Latest
+            </Button>
+          </div>
+        </div>
+        
+        {/* Complaint System */}
+        <Collapsible
+          open={complaintOpen}
+          onOpenChange={setComplaintOpen}
+          className="space-y-2"
+        >
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium">Report Issues or Complaints</h4>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MessageSquare className="mr-1 h-4 w-4" />
+                {complaintOpen ? "Close" : "Open"}
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          
+          <CollapsibleContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              If you believe an AI service's ethical score is incorrect or you've encountered 
+              problematic AI behavior, please provide details below:
+            </p>
+            
+            <div className="space-y-2">
+              <Label htmlFor="complaint-category" className="text-xs">Issue Category</Label>
+              <select 
+                id="complaint-category"
+                className="w-full text-sm border rounded px-3 py-1.5"
+                value={complainCategory}
+                onChange={(e) => setComplainCategory(e.target.value)}
+              >
+                <option value="bias">AI Bias Detection</option>
+                <option value="privacy">Privacy Concerns</option>
+                <option value="safety">Safety Issues</option>
+                <option value="transparency">Transparency Problems</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="complaint-text" className="text-xs">Your Complaint</Label>
+              <Textarea
+                id="complaint-text"
+                placeholder="Describe the issue in detail..."
+                value={complaintText}
+                onChange={(e) => setComplaintText(e.target.value)}
+                className="w-full h-24 text-sm"
+              />
+            </div>
+            
+            <Button 
+              size="sm"
+              onClick={handleComplaintSubmit}
+              className="w-full"
+            >
+              Submit Complaint
+            </Button>
+          </CollapsibleContent>
+        </Collapsible>
       </Card>
       
       <Card className="p-4">
