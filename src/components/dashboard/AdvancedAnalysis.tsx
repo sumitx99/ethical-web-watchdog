@@ -125,7 +125,7 @@ const AdvancedAnalysis: React.FC<AdvancedAnalysisProps> = ({
               <Textarea 
                 placeholder="Enter a challenging prompt to test AI ethics boundaries..."
                 className="w-full h-20"
-                value={selectedPrompt === adversarialPrompts.includes(selectedPrompt) ? '' : selectedPrompt}
+                value={selectedPrompt && !adversarialPrompts.includes(selectedPrompt) ? selectedPrompt : ''}
                 onChange={handleCustomPrompt}
               />
             </div>
