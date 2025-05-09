@@ -6,10 +6,12 @@ import ScoreCategories from './dashboard/ScoreCategories';
 import AdvancedAnalysis from './dashboard/AdvancedAnalysis';
 import { generateDemoData, calculateOverallScore, getOverallRating } from './dashboard/DashboardUtils';
 import { AnalysisResult, PageInfo, DashboardProps } from './dashboard/types';
+import { useToast } from "@/hooks/use-toast";
 
 const Dashboard: React.FC<DashboardProps> = ({ isAnalyzing, pageInfo }) => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [activateTestMode, setActivateTestMode] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     // If we're in demo mode or analyzing, generate demo data
@@ -52,8 +54,19 @@ const Dashboard: React.FC<DashboardProps> = ({ isAnalyzing, pageInfo }) => {
     */
     
     // Show a simulated test in progress
+    toast({
+      title: "Adversarial testing initiated",
+      description: "Testing AI service boundaries...",
+    });
+    
     setTimeout(() => {
       setActivateTestMode(false);
+      
+      // In a real implementation, this would be based on actual results
+      toast({
+        title: "Adversarial testing completed",
+        description: "Results are available in the Advanced Analysis section",
+      });
     }, 3000);
   };
 

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -9,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, MessageSquare } from "lucide-react";
+import { Download, MessageSquare, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
@@ -33,7 +32,23 @@ const Settings = () => {
   const [complaintText, setComplaintText] = useState('');
   const [complainCategory, setComplainCategory] = useState('bias');
   const [downloadFormat, setDownloadFormat] = useState('pdf');
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+
+  // Load settings from storage on component mount
+  useEffect(() => {
+    // In a real extension, load from chrome.storage
+    // For now, we'll use localStorage for demo purposes
+    const savedSettings = localStorage.getItem('ethicalWatchdogSettings');
+    if (savedSettings) {
+      try {
+        const parsedSettings = JSON.parse(savedSettings);
+        setSettings(parsedSettings);
+      } catch (e) {
+        console.error('Failed to parse saved settings:', e);
+      }
+    }
+  }, []);
 
   const handleToggle = (key: keyof typeof settings) => {
     setSettings(prev => ({
@@ -62,26 +77,21 @@ const Settings = () => {
   };
 
   const handleSave = () => {
+    setIsSaving(true);
+    
     // In a real extension, save to chrome.storage
-    // chrome.storage.sync.set({ settings }, () => {
-    //   console.log('Settings saved');
-    // });
+    // For demo, save to localStorage
+    localStorage.setItem('ethicalWatchdogSettings', JSON.stringify(settings));
     
-    // For now, just log
-    console.log('Settings saved:', settings);
-    
-    // Show a temporary "Saved" message
-    const saveButton = document.getElementById('save-button');
-    if (saveButton) {
-      const originalText = saveButton.textContent;
-      saveButton.textContent = 'Saved!';
-      saveButton.setAttribute('disabled', 'true');
+    // Simulate a delay to show the saving state
+    setTimeout(() => {
+      setIsSaving(false);
       
-      setTimeout(() => {
-        saveButton.textContent = originalText;
-        saveButton.removeAttribute('disabled');
-      }, 1500);
-    }
+      toast({
+        title: "Settings saved",
+        description: "Your preferences have been updated",
+      });
+    }, 800);
   };
 
   const handleComplaintSubmit = () => {
@@ -226,7 +236,7 @@ const Settings = () => {
         </div>
       </Card>
       
-      {/* New: Detailed Report Section */}
+      {/* Detailed Report Section */}
       <Card className="p-4 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium">Detailed Reports</h3>
@@ -360,8 +370,19 @@ const Settings = () => {
         className="w-full" 
         onClick={handleSave}
         id="save-button"
+        disabled={isSaving}
       >
-        Save Settings
+        {isSaving ? (
+          <>
+            <span className="animate-spin mr-2">⟳</span>
+            Saving...
+          </>
+        ) : (
+          <>
+            <Save className="mr-2 h-4 w-4" /> 
+            Save Settings
+          </>
+        )}
       </Button>
     </div>
   );
