@@ -36,8 +36,5 @@ export default defineConfig(({ mode }) => ({
         }
       }
     }
-  },
-  optimizeDeps: {
-    exclude: ['lovable-tagger']
   }
 }));
