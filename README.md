@@ -8,6 +8,7 @@ A browser extension that analyzes AI interactions for ethical concerns in real-t
 
 ## Features
 
+
 - **AI Detection**: Automatically identifies AI systems on webpages
 - **Real-time Analysis**: Monitors and analyzes interactions with AI services
 - **Ethical Assessment**: Provides scores across multiple ethical dimensions:
