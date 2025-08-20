@@ -1,4 +1,3 @@
-
 # Ethical Web Watchdog
 
 A browser extension that analyzes AI interactions for ethical concerns in real-time.
