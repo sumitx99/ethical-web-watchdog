@@ -4,7 +4,6 @@ A browser extension that analyzes AI interactions for ethical concerns in real-t
 
 ![image](https://github.com/user-attachments/assets/50c2a193-e13d-4593-adaf-e3ba0542417d)
 
-
 ## Features
 
 - **AI Detection**: Automatically identifies AI systems on webpages
